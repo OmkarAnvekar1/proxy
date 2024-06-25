@@ -1,0 +1,75 @@
+//c_client
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<unistd.h>
+#include<netinet/in.h>
+#include<netdb.h>
+#include<arpa/inet.h>
+#include<sys/types.h>
+#include<sys/socket.h>
+
+#define BUFLEN 1024
+#define MAX 90
+#define SERVER_TCP_PORT 5750
+
+char buf[BUFLEN];
+int n, yes=1,new_sd,sd,port,client_len;
+struct sockaddr_in server, client;
+
+int flag;
+void func(int sockfd)
+{
+	for(;;)
+	{
+		bzero(buf, sizeof(buf));
+		printf("Enter msg to be sent : ");
+		n=0;
+		fgets(buf,sizeof(buf), stdin);
+
+		if(strncmp(buf, "exit", 4)==0)
+		{
+			printf("exiting ..........");
+			break;
+		}
+
+		n = strlen(buf);
+		write(sockfd,buf,n);
+		bzero(buf, sizeof(buf));
+		
+		read(sockfd,buf,sizeof(buf)); // new line  v v important
+		
+		
+		printf("msg from server: %s\n", buf);
+	}
+}
+
+
+
+int main(int argc, char **argv)
+{
+
+	port = atoi(argv[1]);
+
+	if((sd = socket(AF_INET, SOCK_STREAM, 0))==-1)
+	{
+		fprintf(stderr,"cant create socket");
+		exit(1);
+	}
+
+	server.sin_family = AF_INET;
+	server.sin_port = port;
+	server.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+
+	if(connect(sd, (struct sockaddr*)&server, sizeof(server))==-1)
+	{
+		fprintf(stderr,"cant connect");
+		exit(1);
+	}
+			func(sd);
+			close(sd);
+			return(0);
+
+}
+
