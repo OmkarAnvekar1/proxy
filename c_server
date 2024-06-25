@@ -1,0 +1,103 @@
+//c_server
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<unistd.h>
+#include<netinet/in.h>
+#include<netdb.h>
+#include<arpa/inet.h>
+#include<sys/types.h>
+#include<sys/socket.h>
+
+#define BUFLEN 1024
+#define MAX 90
+#define SERVER_TCP_PORT 5750
+
+
+int n, yes=1,new_sd,sd,port,client_len;
+struct sockaddr_in server, client;int flag;
+
+int func(int sockfd)
+{
+char buf[MAX];
+
+	for(;;)
+	{
+		if(flag ==1)
+		break;
+
+
+		bzero(buf, MAX);
+		n=read(sockfd, buf, sizeof(buf));
+		printf("msg received from client :%s\n",buf);
+		bzero(buf, MAX);
+		n=0;
+		printf("Enter msg to be sent :");
+		fgets(buf,sizeof(buf), stdin);
+		n = strlen(buf);
+
+		if(strncmp("exit",buf, 4)==0)
+		{
+			printf("exiting ..........");
+			flag =1;
+			break;
+		}
+else
+{
+	write(sockfd, buf, sizeof(buf));
+	bzero(buf,MAX);
+}
+		}
+}
+
+
+
+int main(int argc, char **argv)
+{
+char buf[BUFLEN];
+	port = atoi(argv[1]);
+
+	if((sd = socket(AF_INET, SOCK_STREAM, 0))==-1)
+	{
+		fprintf(stderr,"cant create socket");
+		exit(1);
+	}
+
+	server.sin_family = AF_INET;
+	server.sin_port = port;
+	server.sin_addr.s_addr = htonl(INADDR_ANY);
+
+	if((setsockopt(sd,SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)))==-1)
+	{
+		perror("setsockopt");
+		exit(1);
+	}
+
+	if(bind(sd, (struct sockaddr * )&server, sizeof(server))==-1)
+		{
+		fprintf(stderr,"cant bind");
+		exit(1);
+		}
+
+		listen(sd,5);
+
+		while(1)
+			{
+				client_len=sizeof(client);
+				
+				if((new_sd = accept(sd,(struct sockaddr*)&client, &client_len))==-1)
+					{
+						fprintf(stderr,"cant accept");
+						exit(1);
+					}
+
+func(new_sd);
+close(new_sd);
+			}
+			
+			close(sd);
+			return(0);
+
+}
+
+
