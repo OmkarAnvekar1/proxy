@@ -1,0 +1,65 @@
+//ftp client
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<unistd.h>
+#include<netinet/in.h>
+#include<netdb.h>
+#include<arpa/inet.h>
+#include<sys/types.h>
+#include<sys/socket.h>
+
+#define BUFLEN 1024
+int n, yes=1,new_sd,sd,port,client_len;
+struct sockaddr_in server, client;
+
+void writefile(int sd)
+{
+char buf[BUFLEN];
+	FILE *file;
+	file= fopen("xyz.txt", "w");
+	if(file==NULL)
+	{
+		printf("Error");
+		exit(1);
+	}
+	else
+	{
+		while((read(sd,buf,sizeof(buf)))>0)
+		{
+			fputs(buf,file);
+			bzero(buf,sizeof(buf));
+		}
+	}
+	fclose(file);
+}
+
+int main(int argc, char **argv)
+{
+char buf[BUFLEN];
+	port = atoi(argv[1]);
+
+	if((sd = socket(AF_INET, SOCK_STREAM, 0))==-1)
+	{
+		fprintf(stderr,"cant create socket");
+		exit(1);
+	}
+
+	server.sin_family = AF_INET;
+	server.sin_port = port;
+	server.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+	if(connect(sd, (struct sockaddr*)&server, sizeof(server))==-1)
+	{
+		fprintf(stderr,"cant connect");
+		exit(1);
+	}
+	printf("Enter msg to be sent : ");
+	scanf("%s", buf);
+	write(sd, buf,sizeof(buf));
+	writefile(sd);
+	close(sd);
+	return(0);
+}
+
+
