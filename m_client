@@ -1,0 +1,81 @@
+//multi_client
+#include <stdio.h> 
+#include <sys/types.h> 
+#include <sys/socket.h> 
+#include <netinet/in.h> 
+#include <arpa/inet.h> 
+#include <stdlib.h> 
+#include <unistd.h> 
+#include <string.h> 
+#include <pthread.h> 
+ 
+#define BUFLEN 256 
+#define MAX 90 
+int flag = 0; 
+void *receive_message(void *arg) { 
+int sockfd = *((int *)arg); 
+char buff[MAX]; 
+int n; 
+while (!flag) { 
+bzero(buff, MAX); 
+n = read(sockfd, buff, sizeof(buff)); 
+if (n <= 0) { 
+printf("Server disconnected.\n"); 
+break; 
+} 
+printf("Message from server: %s", buff); 
+} 
+close(sockfd); 
+pthread_exit(NULL); 
+} 
+ 
+int main(int argc, char **argv) { 
+int n; 
+int sd, port; 
+char buff[BUFLEN]; 
+pthread_t tid; 
+struct sockaddr_in server; 
+if (argc != 3) { 
+fprintf(stderr, "Usage: %s <server_ip> <server_port>\n", argv[0]); 
+exit(1); 
+} 
+ 
+port = atoi(argv[2]); // Port=5750 
+if ((sd = socket(AF_INET, SOCK_STREAM, 0)) == -1) { 
+fprintf(stderr, "Can't create a socket\n"); 
+exit(1); 
+} 
+ 
+server.sin_family = AF_INET; 
+server.sin_port = htons(port); 
+server.sin_addr.s_addr = inet_addr(argv[1]); 
+ 
+if (connect(sd, (struct sockaddr *)&server, sizeof(server)) == -1) { 
+fprintf(stderr, "Can't connect\n"); 
+exit(1); 
+} 
+ 
+// Create a thread for receiving messages from the server 
+if (pthread_create(&tid, NULL, receive_message, (void *)&sd) != 0) { 
+perror("pthread_create"); 
+close(sd); 
+exit(1); 
+} 
+ 
+// Main thread for sending messages to the server 
+while (1) { 
+printf("Enter the message to be sent: "); 
+fgets(buff, sizeof(buff), stdin); 
+n = strlen(buff); 
+write(sd, buff, n); 
+ 
+if (strncmp(buff, "exit", 4) == 0) { 
+printf("Client exiting.\n"); 
+flag = 1; 
+break; 
+} 
+} 
+pthread_join(tid, NULL); 
+close(sd); 
+return 0; 
+}
