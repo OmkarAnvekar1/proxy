@@ -1,0 +1,9 @@
+set interfaces ge-0/0/6 unit 0 family ethernet-switching vlan members explorer 
+set interfaces ge-0/0/11 unit 0 family ethernet-switching vlan members achiever 
+set interfaces me0 unit 0 family inet address 176.16.2.1/24 
+set interfaces vlan unit 55 family inet address 192.168.10.1/24     // slave1 
+set interfaces vlan unit 66 family inet address 30.30.10.1/24  //slave2 
+set vlans achiever vlan-id 66 
+set vlans achiever l3-interface vlan.66 
+set vlans explorer vlan-id 55 
+set vlans explorer l3-interface vlan.55
